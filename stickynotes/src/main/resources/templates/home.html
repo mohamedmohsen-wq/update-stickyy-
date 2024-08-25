@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en" layout:decorate="layout/main" xmlns:layout="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+
+<body>
+	
+<span layout:fragment="page-name">Home Page</span>
+<div layout:fragment="content">
+    <div class="row">
+        <div class="col-8">
+            <div class="row">
+                <div class="col-4" th:each="sticky : ${stickyNotes}">
+                    <div class="card" th:styleappend="${'background-color: '+sticky.getColor()}">
+                        <div class="card-body">
+							   <a style="font-size: 60%;" th:href="@{'/note/delete/' + ${sticky.id}}" class="btn btn-sm btn-danger">Delete</a>
+							   <p class="text-muted mt-2">Sent from: <span th:text="${sticky.userEntity.username}"></span></p>
+
+                            <h5 class="card-title" th:text="${sticky.getName()}"></h5>
+							<h6 class="card-subtitle mb-2 text-muted">StartTime : <span th:text="${sticky.getCreatedAt()}"></span></h6>
+							<h7 class="card-subtitle mb-2 text-muted">EndTime : <span th:text="${sticky.getEndTime()}"></span></h7>
+							<p class="card-text" th:text="${sticky.getDescription()}"></p>
+							<div style="display: flex; justify-content: space-between;">
+								
+							    <a th:href="@{'/sticky-note/' + ${sticky.getId()} }" class="card-link">View Notes</a>
+								<div th:if="${!sticky.isSent}">
+								                   <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" th:data-bs-target="'#allUsersModal' + ${sticky.getId()}">
+								                       Send
+								                   </button>
+								               </div>
+								               <div th:if="${sticky.isSent}">
+								                   <span class="text-success">Done</span>
+								               </div>
+							
+
+								<!-- Modal -->
+								<div th:id="'allUsersModal' + ${sticky.getId()}" class="modal fade" tabindex="-1" aria-labelledby="allUsersModalLabel" aria-hidden="true">
+								    <div class="modal-dialog">
+								        <div class="modal-content">
+								            <div class="modal-header">
+								                <h5 class="modal-title">Select Username</h5>
+								                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+								            </div>
+								            <div class="modal-body">
+								                <form method="post" th:action="@{/updatesend/{id}(id=${sticky.getId()})}">
+								                    <div class="form-group mb-3">
+								                        <label for="username">Username</label>
+								                        <select name="username" class="form-control" id="username">
+								                            <option value="" disabled selected>Select a Username</option>
+								                            <option th:each="user : ${users}" th:value="${user.username}" th:text="${user.username}"></option>
+								                        </select>
+								                    </div>
+								                    <div class="modal-footer">
+								                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+								                        <button type="submit" class="btn btn-danger">Confirm</button>
+								                    </div>
+								                </form>
+								            </div>
+								        </div>
+								    </div>
+								</div>
+
+							</div>						
+                        </div>
+						
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--Save form -->
+        <div class="col-4">
+            <div class="row">
+                <h4>Add New Sticky Note</h4>
+                <div class="col-12">
+                    <form action="save" method="post">
+                        <div class="form-group">
+                            <label for="sticky_note_name">Sticky Note Name</label>
+                            <input type="text" class="form-control" id="sticky_note_name" name="name">
+                        </div>
+                        <div class="form-group">
+                            <label for="sticky_note_description">Sticky Note Description</label>
+                            <input type="text" class="form-control" id="sticky_note_description" name="description">
+                        </div>
+						<div class="form-group">
+						    <label for="sticky_note_end_time">Sticky Note End Time</label>
+						    <input type="datetime-local" class="form-control" id="sticky_note_end_time" name="endTime">
+						</div>
+
+                        <div class="form-group">
+                            <label for="sticky_note_color">Color </label>
+                            <select name="color" class="form-control" id="sticky_note_color">
+                                <option value="lightblue">Blue</option>
+                                <option value="lightpink">Pink</option>
+                                <option value="antiquewhite">Antique White</option>
+                                <option value="lightgreen"> Green</option>
+                            </select>
+                        </div>
+                        <br>
+                        <div class="form-group">
+                            <button class="btn btn-primary">
+                                Submit
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

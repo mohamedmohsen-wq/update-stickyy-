@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" layout:decorate="layout/main" xmlns:layout="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Users</title>
+    <style>
+		.role-admin {
+		          color: red; /* لون مخصص لدور Admin */
+		      }
+		      .role-user {
+		          color: blue; /* لون مخصص لدور User */
+		      }
+			  .role-guest {
+			             color: green; /* لون مخصص لدور Guest إذا كان موجودًا */
+			         }
+    </style>
+</head>
+<body>
+<span layout:fragment="page-name">Manage Users</span>
+<div layout:fragment="content">
+    <table class="table">
+        <thead>
+        <tr>
+            
+            <th>Username</th>
+           
+            <th>Role</th>
+        </tr>
+        </thead>
+		<tbody>
+			<tr th:each="user : ${users}">
+			      
+				   <td>
+				       <!-- استخدام الشكل الصحيح لدمج المعاملات -->
+				       <a th:href="@{|/?idUser=${user.id}|}" th:text="${user.username}"></a>
+				   </td>
+			      
+			       <td 
+			           th:text="${user.role}"
+			           th:classappend="${user.role.toUpperCase() == 'ADMIN' ? 'role-admin' 
+			                           : (user.role.toUpperCase() == 'USER' ? 'role-user' 
+			                           : 'role-guest')}">
+			       </td>
+			   </tr>
+		</tbody>
+    </table>
+</div>
+</body>
+</html>

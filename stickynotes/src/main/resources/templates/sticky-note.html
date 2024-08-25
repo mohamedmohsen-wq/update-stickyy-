@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en" layout:decorate="layout/main" xmlns:layout="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Sticky Notes</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .sub-title {
+            color: grey;
+            font-size: 20px;
+        }
+
+        .edit-btn {
+            float: right;
+        }
+
+        .modal-content {
+            border-radius: 0.5rem;
+        }
+
+        .chart-container {
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
+        }
+
+        .note-checkbox {
+            margin-right: 10px;
+        }
+
+        .done-btn {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <span layout:fragment="page-name">
+        Sticky Notes / <span class="sub-title" th:text="${stickyNote.getName()}"></span>
+        <span class="edit-btn">
+            <a th:href="@{'/edit-sticky-note/' + ${stickyNote.getId()}}" class="btn btn-primary btn-sm">Edit</a>
+            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addNoteModal">Add</button>
+        </span>
+    </span>
+
+    <div layout:fragment="content">
+        <div class="row">
+            <div class="col-12">
+                <div class="card" th:styleappend="${'background-color: '+stickyNote.getColor()}">
+                    <div class="card-body">
+                        <h5 class="card-title" th:text="${stickyNote.getName()}"></h5>
+                        <h6 class="card-subtitle mb-2 text-muted">Created: <span th:text="${stickyNote.getCreatedAt()}"></span></h6>
+                        <p class="card-text" th:text="${stickyNote.getDescription()}"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="form-group">
+                    <label>Select Notes:</label>
+                    <div id="notesCheckboxes">
+                        <div th:each="note, iterStat : ${notes}" class="form-check">
+                            <input class="form-check-input note-checkbox" type="checkbox" id="noteCheckboxes" th:value="${note.getId()}" th:data-note="${note.getNote()}">
+                            <label class="form-check-label" th:for="${'noteCheckboxes' + iterStat.index}">
+                                <span th:text="${iterStat.index + 1} + ': ' + ${note.getNote()}"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- Done Button -->
+                    <button type="button" class="btn btn-primary done-btn" id="doneButton">Done</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Container -->
+        <div class="chart-container mt-5">
+            <canvas id="barChart"></canvas>
+        </div>
+
+        <!-- Modal -->
+        <div class="modal fade" id="addNoteModal" tabindex="-1" aria-labelledby="addNoteModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form th:action="@{/note/add/{stickyNoteId}(stickyNoteId=${stickyNote.getId()})}" method="post">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addNoteModalLabel">Add New Note</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <label for="note">Note</label>
+                                        <textarea name="note" id="note" class="form-control" rows="4"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Save changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.7/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
+    <!-- Chart.js Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const ctx = document.getElementById('barChart').getContext('2d');
+            let barChart;
+
+            function updateChart() {
+                const checkedCheckboxes = Array.from(document.querySelectorAll('#notesCheckboxes .form-check-input:checked'));
+                const selectedOptions = checkedCheckboxes.map(checkbox => checkbox.getAttribute('data-note'));
+
+                // Calculate the data based on selected notes
+                const data = selectedOptions.reduce((acc, noteText) => {
+                    acc[noteText] = (acc[noteText] || 0) + 1;
+                    return acc;
+                }, {});
+
+                const labels = Object.keys(data);
+                const values = Object.values(data);
+
+                const total = values.reduce((a, b) => a + b, 0);
+                const percentageData = values.map(value => (value / total * 100).toFixed(2));
+
+                if (barChart) {
+                    barChart.destroy();
+                }
+
+                barChart = new Chart(ctx, {
+                    type: 'pie', // Use 'bar' for bar chart or 'pie' for pie chart
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Note Percentages',
+                            data: percentageData,
+                            backgroundColor: ['rgba(75, 192, 192, 0.2)', 'rgba(153, 102, 255, 0.2)', 'rgba(255, 159, 64, 0.2)'],
+                            borderColor: ['rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(tooltipItem) {
+                                        return tooltipItem.label + ': ' + tooltipItem.raw + '%';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Attach change event to the checkboxes
+            document.querySelectorAll('#notesCheckboxes .form-check-input').forEach(checkbox => {
+                checkbox.addEventListener('change', updateChart);
+            });
+
+            // Attach click event to the Done button
+            document.getElementById('doneButton').addEventListener('click', () => {
+                const selectedCheckboxes = Array.from(document.querySelectorAll('#notesCheckboxes .form-check-input:checked'));
+                const selectedNoteIds = selectedCheckboxes.map(checkbox => checkbox.value);
+
+                // Perform action with selectedNoteIds (e.g., send to server or process)
+                console.log('Selected note IDs:', selectedNoteIds);
+
+                // Optionally, show an alert or message
+                alert('Selected notes have been processed.');
+            });
+
+            // Initialize chart
+            updateChart();
+        });
+    </script>
+</body>
+</html>
